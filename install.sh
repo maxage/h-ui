@@ -373,22 +373,46 @@ install_h_ui_systemd() {
   [[ -z "${h_ui_time_zone}" ]] && h_ui_time_zone="Asia/Shanghai"
 
   timedatectl set-timezone ${h_ui_time_zone} && timedatectl set-local-rtc 0
-  systemctl restart rsyslog
+  
+  # 重启日志服务（如果存在）
+  if systemctl is-active --quiet rsyslog; then
+    systemctl restart rsyslog
+  elif systemctl is-active --quiet syslog; then
+    systemctl restart syslog
+  fi
+  
+  # 重启定时任务服务
   if [[ "${release}" == "centos" || "${release}" == "rocky" ]]; then
     systemctl restart crond
   elif [[ "${release}" == "debian" || "${release}" == "ubuntu" ]]; then
-    systemctl restart cron
+    if systemctl is-active --quiet cron; then
+      systemctl restart cron
+    fi
   fi
 
   export GIN_MODE=release
 
-  bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
-  if [[ "latest" != "${hui_systemd_version}" ]]; then
-    bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
+  # 临时使用原版二进制文件，直到发布自己的 Release
+  if [[ "${GITHUB_USER}" == "maxage" ]]; then
+    bin_url=https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch}
+    if [[ "latest" != "${hui_systemd_version}" ]]; then
+      bin_url=https://github.com/jonssonyan/h-ui/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
+    fi
+  else
+    bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
+    if [[ "latest" != "${hui_systemd_version}" ]]; then
+      bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
+    fi
   fi
 
-  curl -fsSL "${bin_url}" -o /usr/local/h-ui/h-ui &&
-    chmod +x /usr/local/h-ui/h-ui &&
+  echo_content green "---> Downloading H UI binary from: ${bin_url}"
+  if ! curl -fsSL "${bin_url}" -o /usr/local/h-ui/h-ui; then
+    echo_content red "---> Failed to download H UI binary"
+    echo_content red "---> Please check if the release exists: ${bin_url}"
+    exit 1
+  fi
+  
+  chmod +x /usr/local/h-ui/h-ui &&
     curl -fsSL https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/h-ui.service -o /etc/systemd/system/h-ui.service &&
     sed -i "s|^ExecStart=.*|ExecStart=/usr/local/h-ui/h-ui -p ${h_ui_port}|" "/etc/systemd/system/h-ui.service" &&
     systemctl daemon-reload &&
@@ -422,7 +446,13 @@ upgrade_h_ui_systemd() {
   if [[ $(systemctl is-active h-ui) == "active" ]]; then
     systemctl stop h-ui
   fi
-  curl -fsSL https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch} -o /usr/local/h-ui/h-ui &&
+  # 临时使用原版二进制文件进行升级
+  if [[ "${GITHUB_USER}" == "maxage" ]]; then
+    upgrade_bin_url=https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch}
+  else
+    upgrade_bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
+  fi
+  curl -fsSL ${upgrade_bin_url} -o /usr/local/h-ui/h-ui &&
     chmod +x /usr/local/h-ui/h-ui &&
     systemctl restart h-ui
   echo_content skyBlue "---> H UI upgrade successful"
