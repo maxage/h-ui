@@ -300,3 +300,27 @@ export interface Hysteria2AcmePathVo {
   crtPath: string;
   keyPath: string;
 }
+// 第二节点相关类型定义
+export interface Node2ConfigDto {
+  enable: boolean;
+  remark: string;
+}
+
+export interface Node2ConfigVo {
+  enable: boolean;
+  remark: string;
+  port: number;
+  status: boolean;
+}
+
+export interface Socks5ConfigDto {
+  addr: string;
+  username: string;
+  password: string;
+}
+
+export interface Socks5ConfigVo {
+  addr: string;
+  username: string;
+  password?: string; // 密码在返回时可能被隐藏
+}

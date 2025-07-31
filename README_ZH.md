@@ -27,6 +27,7 @@
 - 限制用户流量、用户在线状态、强制用户下线、在线用户数、重设用户流量
 - 限制用户同时在线设备数、在线设备数量
 - 用户订阅链接、节点URL、导入和导出用户
+- 双节点支持：支持配置第二节点通过主节点SOCKS5出站，用户可单独控制节点权限
 - 管理 Hysteria2 配置和 Hysteria2 版本、端口跳跃
 - 更改 Web 端口、修改 Hysteria2 流量倍数
 - Telegram 通知
@@ -47,16 +48,22 @@ CPU: x86_64/amd64 arm64/aarch64
 
 ### 快速安装 (推荐)
 
-安装最新版
+**双节点支持版本安装（推荐）：**
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh)
+```
+
+安装[自定义版本](https://github.com/maxage/h-ui/releases)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh) v0.0.1
+```
+
+**原版安装：**
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh)
-```
-
-安装[自定义版本](https://github.com/jonssonyan/h-ui/releases)
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) v0.0.1
 ```
 
 ### systemd
@@ -152,6 +159,37 @@ rm -rf /h-ui
 ## 系统升级
 
 在管理后台将用户、系统配置、Hysteria2 配置导出，重新部署最新版的 h-ui，部署完成之后在管理后台将数据导入
+
+## 双节点配置
+
+### 功能说明
+
+双节点功能允许您配置一个通过主 Hysteria2 节点作为 SOCKS5 出站的第二节点，为用户提供更多连接选择。
+
+### 配置步骤
+
+1. **启用第二节点**
+   - 在 Hysteria 管理页面找到"第二节点配置"区域
+   - 开启"启用第二节点"开关
+   - 设置节点备注名称（可选）
+
+2. **配置 SOCKS5 出站**
+   - 填写 SOCKS5 代理地址（格式：host:port）
+   - 如需要，填写 SOCKS5 用户名和密码
+   - 点击"保存 SOCKS5 配置"
+
+3. **用户权限设置**
+   - 在账户管理中编辑用户
+   - 在"节点权限"中选择：
+     - 单节点：用户只能使用主节点
+     - 双节点：用户可以使用主节点和第二节点
+
+### 注意事项
+
+- 第二节点端口自动设置为主节点端口+1
+- 第二节点通过主节点的 SOCKS5 代理进行出站连接
+- 只有启用第二节点后，用户才能选择双节点权限
+- 第二节点故障不会影响主节点正常运行
 
 ## 常见问题
 

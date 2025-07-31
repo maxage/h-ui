@@ -10,6 +10,7 @@ type AccountVo struct {
 	KickUtilTime int64  `json:"kickUtilTime"` // Offline remaining time
 	DeviceNo     int64  `json:"deviceNo"`     // Limit the number of devices
 	Role         string `json:"role"`
+	NodeAccess   int64  `json:"nodeAccess"`   // Node access permission: 1=single, 2=dual
 	Deleted      int64  `json:"deleted"`
 
 	Online bool  `json:"online"` // online status

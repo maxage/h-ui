@@ -38,3 +38,14 @@ type Hysteria2AcmePathVo struct {
 	CrtPath string `json:"crtPath"`
 	KeyPath string `json:"keyPath"`
 }
+// Hysteria2NodeUrlVo 单个节点URL信息
+type Hysteria2NodeUrlVo struct {
+	NodeName string `json:"nodeName"`
+	Url      string `json:"url"`
+	QrCode   []byte `json:"qrCode"`
+}
+
+// Hysteria2MultiNodeUrlVo 多节点URL信息
+type Hysteria2MultiNodeUrlVo struct {
+	Nodes []Hysteria2NodeUrlVo `json:"nodes"`
+}

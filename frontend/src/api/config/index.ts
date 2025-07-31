@@ -110,3 +110,84 @@ export function uploadCertFileApi(data: FormData): AxiosPromise<string> {
     headers: { "Content-Type": "multipart/form-data" },
   });
 }
+// 第二节点相关API
+export function getHysteria2Node2ConfigApi(): AxiosPromise<Hysteria2ServerConfig> {
+  return request({
+    url: "/config/getHysteria2Node2Config",
+    method: "get",
+  });
+}
+
+export function updateHysteria2Node2ConfigApi(
+  data: Hysteria2ServerConfig
+): AxiosPromise {
+  return request({
+    url: "/config/updateHysteria2Node2Config",
+    method: "post",
+    data: data,
+  });
+}
+
+export function getSocks5ConfigApi(): AxiosPromise<Socks5ConfigVo> {
+  return request({
+    url: "/config/getSocks5Config",
+    method: "get",
+  });
+}
+
+export function updateSocks5ConfigApi(data: Socks5ConfigDto): AxiosPromise {
+  return request({
+    url: "/config/updateSocks5Config",
+    method: "post",
+    data: data,
+  });
+}
+
+export function getNode2StatusApi(): AxiosPromise<Node2ConfigVo> {
+  return request({
+    url: "/config/getNode2Status",
+    method: "get",
+  });
+}
+
+export function toggleNode2Api(data: Node2ConfigDto): AxiosPromise {
+  return request({
+    url: "/config/toggleNode2",
+    method: "post",
+    data: data,
+  });
+}
+
+export function getAllNodesStatusApi(): AxiosPromise<Record<string, boolean>> {
+  return request({
+    url: "/config/getAllNodesStatus",
+    method: "get",
+  });
+}//
+ 第二节点导入导出API
+export function exportNode2ConfigApi(): AxiosPromise {
+  return request({
+    url: "/config/exportNode2Config",
+    method: "post",
+    responseType: "blob",
+  });
+}
+
+export function importNode2ConfigApi(data: FormData): AxiosPromise {
+  return request({
+    url: "/config/importNode2Config",
+    method: "post",
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    data: data,
+  });
+}
+
+export function exportFullConfigApi(): AxiosPromise {
+  return request({
+    url: "/config/exportFullConfig",
+    method: "post",
+    responseType: "blob",
+  });
+}

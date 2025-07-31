@@ -67,7 +67,7 @@ func releaseResource() {
 	if err := dao.CloseSqliteDB(); err != nil {
 		logrus.Errorf(err.Error())
 	}
-	if err := service.ReleaseHysteria2(); err != nil {
+	if err := service.ReleaseAllNodes(); err != nil {
 		logrus.Errorf(err.Error())
 	}
 	if err := service.RemoveByComment(); err != nil {

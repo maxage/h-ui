@@ -1070,6 +1070,9 @@
         </el-tabs>
       </el-form>
     </el-card>
+
+    <!-- 第二节点配置 -->
+    <Node2Config />
   </div>
 </template>
 
@@ -1087,6 +1090,7 @@ import {
   Tab,
 } from "@/api/config/types";
 import Outbounds from "./components/Outbounds/index.vue";
+import Node2Config from "./components/Node2Config/index.vue";
 import { CirclePlusFilled, Select } from "@element-plus/icons-vue";
 import {
   exportHysteria2ConfigApi,

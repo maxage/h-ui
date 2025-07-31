@@ -56,3 +56,20 @@ func (h *Hysteria2Process) Release() error {
 	}
 	return nil
 }
+// 第二节点相关变量和实例
+var mutexHysteria2Node2 sync.Mutex
+var cmdHysteria2Node2 exec.Cmd
+var hysteria2Node2Instance *Hysteria2Process
+
+func init() {
+	// 初始化第二节点实例
+	hysteria2Node2Instance = &Hysteria2Process{
+		process{mutex: &mutexHysteria2Node2, cmd: &cmdHysteria2Node2}, 
+		util.GetHysteria2BinPath(), 
+		constant.Hysteria2Node2ConfigPath,
+	}
+}
+
+func NewHysteria2Node2Instance() *Hysteria2Process {
+	return hysteria2Node2Instance
+}

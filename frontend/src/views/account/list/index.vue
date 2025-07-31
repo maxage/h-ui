@@ -144,6 +144,19 @@
           prop="deviceNo"
         />
         <el-table-column
+          key="nodeAccess"
+          :label="$t('account.nodeAccess')"
+          align="center"
+          prop="nodeAccess"
+          width="100"
+        >
+          <template #default="scope">
+            <el-tag :type="scope.row.nodeAccess === 2 ? 'success' : 'info'">
+              {{ scope.row.nodeAccess === 2 ? $t('account.dualNode') : $t('account.singleNode') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
           key="kickUtilTime"
           :label="$t('account.kickUtilTimeLast')"
           align="center"
@@ -331,6 +344,15 @@
             style="width: 220px"
           />
         </el-form-item>
+        <el-form-item :label="$t('account.nodeAccess')" prop="nodeAccess">
+          <el-radio-group v-model="dataForm.nodeAccess">
+            <el-radio :label="1">{{ $t("account.singleNode") }}</el-radio>
+            <el-radio :label="2" :disabled="!node2Enabled">{{ $t("account.dualNode") }}</el-radio>
+          </el-radio-group>
+          <div v-if="!node2Enabled" class="form-item-tip">
+            {{ $t('account.node2DisabledTip') }}
+          </div>
+        </el-form-item>
         <el-form-item :label="$t('account.expireTime')" prop="expireTime">
           <el-date-picker
             v-model="dataForm.expireTime"
@@ -455,6 +477,7 @@ import {
   hysteria2SubscribeUrlApi,
   hysteria2UrlApi,
 } from "@/api/hysteria2";
+import { getNode2StatusApi } from "@/api/config";
 import {
   UploadFile,
   UploadRawFile,
@@ -627,6 +650,7 @@ const state = reactive({
     visible: false,
   } as DialogType,
   qrCodeSrc: "",
+  node2Enabled: false,
 });
 
 const {
@@ -642,6 +666,7 @@ const {
   fileList,
   qrCodeDialog,
   qrCodeSrc,
+  node2Enabled,
 } = toRefs(state);
 
 const resetDataForm = () => {
@@ -649,6 +674,7 @@ const resetDataForm = () => {
     id: undefined,
     quota: 0,
     expireTime: getMonthLater(),
+    nodeAccess: 1,
     deleted: 0,
   });
   quotaTmp.value = 0;
@@ -915,9 +941,22 @@ const resetTraffic = async (row: { [key: string]: any }) => {
   }
 };
 
+// 检查第二节点状态
+const checkNode2Status = async () => {
+  try {
+    const { data } = await getNode2StatusApi();
+    state.node2Enabled = data.enable;
+  } catch (error) {
+    console.error('Failed to check node2 status:', error);
+    state.node2Enabled = false;
+  }
+};
+
 onMounted(() => {
   // 初始化用户列表数据
   handleQuery();
+  // 检查第二节点状态
+  checkNode2Status();
   if (route.query.focus === "change-pass") {
     nextTick(() => {
       handleUpdate({ id: 1 }).then(() => {
@@ -942,5 +981,11 @@ onMounted(() => {
   right: 0;
   z-index: 1;
   border: 0;
+}
+
+.form-item-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
 }
 </style>

@@ -67,6 +67,7 @@ func PageAccount(c *gin.Context) {
 			KickUtilTime: *item.KickUtilTime,
 			DeviceNo:     *item.DeviceNo,
 			Role:         *item.Role,
+			NodeAccess:   *item.NodeAccess,
 			Deleted:      *item.Deleted,
 			BaseVo: vo.BaseVo{
 				Id:         *item.Id,
@@ -100,6 +101,16 @@ func SaveAccount(c *gin.Context) {
 		return
 	}
 
+	// 验证节点权限
+	nodeAccess := int64(1) // 默认单节点
+	if accountSaveDto.NodeAccess != nil {
+		if err := service.ValidateNodeAccess(*accountSaveDto.NodeAccess); err != nil {
+			vo.Fail(err.Error(), c)
+			return
+		}
+		nodeAccess = *accountSaveDto.NodeAccess
+	}
+
 	passEncrypt := util.SHA224String(*accountSaveDto.Pass)
 	conPass := fmt.Sprintf("%s.%s", *accountSaveDto.Username, *accountSaveDto.ConPass)
 	account := entity.Account{
@@ -109,6 +120,7 @@ func SaveAccount(c *gin.Context) {
 		Quota:      accountSaveDto.Quota,
 		ExpireTime: accountSaveDto.ExpireTime,
 		DeviceNo:   accountSaveDto.DeviceNo,
+		NodeAccess: &nodeAccess,
 		Deleted:    accountSaveDto.Deleted,
 	}
 	err = service.SaveAccount(account)
@@ -164,6 +176,14 @@ func UpdateAccount(c *gin.Context) {
 		}
 	}
 
+	// 验证节点权限
+	if accountUpdateDto.NodeAccess != nil {
+		if err := service.ValidateNodeAccess(*accountUpdateDto.NodeAccess); err != nil {
+			vo.Fail(err.Error(), c)
+			return
+		}
+	}
+
 	var passEncrypt *string
 	if accountUpdateDto.Pass != nil && *accountUpdateDto.Pass != "" {
 		passEncryptSha224 := util.SHA224String(*accountUpdateDto.Pass)
@@ -177,6 +197,7 @@ func UpdateAccount(c *gin.Context) {
 		Quota:      accountUpdateDto.Quota,
 		ExpireTime: accountUpdateDto.ExpireTime,
 		DeviceNo:   accountUpdateDto.DeviceNo,
+		NodeAccess: accountUpdateDto.NodeAccess,
 		Deleted:    accountUpdateDto.Deleted,
 		BaseEntity: entity.BaseEntity{
 			Id: accountUpdateDto.Id,
@@ -241,6 +262,7 @@ func GetAccount(c *gin.Context) {
 		ExpireTime: *account.ExpireTime,
 		DeviceNo:   *account.DeviceNo,
 		Role:       *account.Role,
+		NodeAccess: *account.NodeAccess,
 		Deleted:    *account.Deleted,
 	}
 	vo.Success(accountVo, c)

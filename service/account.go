@@ -65,6 +65,9 @@ func UpdateAccount(account entity.Account) error {
 	if account.DeviceNo != nil {
 		updates["device_no"] = *account.DeviceNo
 	}
+	if account.NodeAccess != nil {
+		updates["node_access"] = *account.NodeAccess
+	}
 	if account.Deleted != nil {
 		updates["deleted"] = *account.Deleted
 	}
@@ -119,6 +122,7 @@ func ListExportAccount() ([]bo.AccountExport, error) {
 			DeviceNo:     *item.DeviceNo,
 			KickUtilTime: *item.KickUtilTime,
 			Role:         *item.Role,
+			NodeAccess:   *item.NodeAccess,
 			Deleted:      *item.Deleted,
 			CreateTime:   *item.CreateTime,
 			UpdateTime:   *item.UpdateTime,
@@ -151,4 +155,79 @@ func GetAccountInfo(c *gin.Context) (vo.AccountInfoVo, error) {
 		Username: myClaims.AccountBo.Username,
 		Roles:    myClaims.AccountBo.Roles,
 	}, nil
+}
+// ValidateNodeAccess 验证用户节点权限
+func ValidateNodeAccess(nodeAccess int64) error {
+	if nodeAccess != 1 && nodeAccess != 2 {
+		return errors.New("invalid node access value, must be 1 or 2")
+	}
+	
+	// 如果用户要求双节点权限，检查第二节点是否启用
+	if nodeAccess == 2 {
+		enabled, err := IsNode2Enabled()
+		if err != nil {
+			return err
+		}
+		if !enabled {
+			return errors.New("node2 is not enabled, cannot set dual node access")
+		}
+	}
+	
+	return nil
+}
+
+// GetUserNodeAccess 获取用户节点权限
+func GetUserNodeAccess(accountId int64) (int64, error) {
+	account, err := GetAccount(accountId)
+	if err != nil {
+		return 1, err
+	}
+	
+	if account.NodeAccess == nil {
+		return 1, nil // 默认单节点
+	}
+	
+	return *account.NodeAccess, nil
+}
+
+// SetDefaultNodeAccess 为现有用户设置默认节点权限
+func SetDefaultNodeAccess() error {
+	// 这个函数在数据库迁移时调用，为所有现有用户设置默认的单节点权限
+	accounts, err := dao.ListAccount(nil, nil)
+	if err != nil {
+		return err
+	}
+	
+	for _, account := range accounts {
+		if account.NodeAccess == nil {
+			defaultAccess := int64(1)
+			updates := map[string]interface{}{"node_access": defaultAccess}
+			if err := dao.UpdateAccount([]int64{*account.Id}, updates); err != nil {
+				return err
+			}
+		}
+	}
+	
+	return nil
+}// 
+DowngradeUsersToSingleNode 将所有双节点用户降级为单节点
+func DowngradeUsersToSingleNode() error {
+	// 查找所有双节点权限的用户
+	accounts, err := dao.ListAccount("node_access = ?", []interface{}{2})
+	if err != nil {
+		return err
+	}
+
+	if len(accounts) == 0 {
+		return nil // 没有需要降级的用户
+	}
+
+	// 批量更新为单节点权限
+	var userIds []int64
+	for _, account := range accounts {
+		userIds = append(userIds, *account.Id)
+	}
+
+	updates := map[string]interface{}{"node_access": 1}
+	return dao.UpdateAccount(userIds, updates)
 }

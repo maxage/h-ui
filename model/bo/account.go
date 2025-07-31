@@ -21,6 +21,7 @@ type AccountExport struct {
 	DeviceNo     int64     `json:"deviceNo"`
 	KickUtilTime int64     `json:"kickUtilTime"`
 	Role         string    `json:"role"`
+	NodeAccess   int64     `json:"nodeAccess"`
 	Deleted      int64     `json:"deleted"`
 	CreateTime   time.Time `json:"createTime"`
 	UpdateTime   time.Time `json:"updateTime"`

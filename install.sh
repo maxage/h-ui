@@ -21,8 +21,12 @@ init_var() {
 
   ssh_local_forwarded_port=8082
 
+  # 支持自定义GitHub仓库
+  GITHUB_USER="${GITHUB_USER:-maxage}"
+  GITHUB_REPO="${GITHUB_REPO:-h-ui}"
+  
   translation_file_content=""
-  translation_file_base_url="https://raw.githubusercontent.com/jonssonyan/h-ui/refs/heads/main/local/"
+  translation_file_base_url="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/refs/heads/main/local/"
   translation_file="en.json"
 }
 
@@ -280,7 +284,7 @@ install_h_ui_docker() {
     -v /h-ui/data:/h-ui/data \
     -v /h-ui/export:/h-ui/export \
     -v /h-ui/logs:/h-ui/logs \
-    jonssonyan/h-ui"${hui_docker_version}" \
+    ${GITHUB_USER}/${GITHUB_REPO}"${hui_docker_version}" \
     ./h-ui -p ${h_ui_port}
   sleep 3
   echo_content yellow "h-ui Panel Port: ${h_ui_port}"
@@ -303,7 +307,7 @@ upgrade_h_ui_docker() {
     exit 0
   fi
 
-  latest_version=$(curl -Ls "https://api.github.com/repos/jonssonyan/h-ui/releases/latest" | grep '"tag_name":' | sed 's/.*"tag_name": "\(.*\)",.*/\1/')
+  latest_version=$(curl -Ls "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest" | grep '"tag_name":' | sed 's/.*"tag_name": "\(.*\)",.*/\1/')
   current_version=$(docker exec h-ui ./h-ui -v | sed -n 's/.*version \([^\ ]*\).*/\1/p')
   if [[ "${latest_version}" == "${current_version}" ]]; then
     echo_content skyBlue "---> H UI is already the latest version"
@@ -312,7 +316,7 @@ upgrade_h_ui_docker() {
 
   echo_content green "---> Upgrade H UI"
   docker rm -f h-ui
-  docker rmi jonssonyan/h-ui
+  docker rmi ${GITHUB_USER}/${GITHUB_REPO}
 
   read -r -p "Please enter the port of H UI (default: 8081): " h_ui_port
   [[ -z "${h_ui_port}" ]] && h_ui_port="8081"
@@ -327,7 +331,7 @@ upgrade_h_ui_docker() {
     -v /h-ui/data:/h-ui/data \
     -v /h-ui/export:/h-ui/export \
     -v /h-ui/logs:/h-ui/logs \
-    jonssonyan/h-ui \
+    ${GITHUB_USER}/${GITHUB_REPO} \
     ./h-ui -p ${h_ui_port}
   echo_content skyBlue "---> H UI upgrade successful"
 }
@@ -344,7 +348,7 @@ uninstall_h_ui_docker() {
 
   echo_content green "---> Uninstall H UI"
   docker rm -f h-ui
-  docker images jonssonyan/h-ui -q | xargs -r docker rmi -f
+  docker images ${GITHUB_USER}/${GITHUB_REPO} -q | xargs -r docker rmi -f
   rm -rf /h-ui/
   remove_forward
   echo_content skyBlue "---> H UI uninstall successful"
@@ -378,14 +382,14 @@ install_h_ui_systemd() {
 
   export GIN_MODE=release
 
-  bin_url=https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch}
+  bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
   if [[ "latest" != "${hui_systemd_version}" ]]; then
-    bin_url=https://github.com/jonssonyan/h-ui/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
+    bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
   fi
 
   curl -fsSL "${bin_url}" -o /usr/local/h-ui/h-ui &&
     chmod +x /usr/local/h-ui/h-ui &&
-    curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/h-ui.service -o /etc/systemd/system/h-ui.service &&
+    curl -fsSL https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/h-ui.service -o /etc/systemd/system/h-ui.service &&
     sed -i "s|^ExecStart=.*|ExecStart=/usr/local/h-ui/h-ui -p ${h_ui_port}|" "/etc/systemd/system/h-ui.service" &&
     systemctl daemon-reload &&
     systemctl enable h-ui &&
@@ -407,7 +411,7 @@ upgrade_h_ui_systemd() {
     exit 0
   fi
 
-  latest_version=$(curl -Ls "https://api.github.com/repos/jonssonyan/h-ui/releases/latest" | grep '"tag_name":' | sed 's/.*"tag_name": "\(.*\)",.*/\1/')
+  latest_version=$(curl -Ls "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest" | grep '"tag_name":' | sed 's/.*"tag_name": "\(.*\)",.*/\1/')
   current_version=$(/usr/local/h-ui/h-ui -v | sed -n 's/.*version \([^\ ]*\).*/\1/p')
   if [[ "${latest_version}" == "${current_version}" ]]; then
     echo_content skyBlue "---> H UI is already the latest version"
@@ -418,7 +422,7 @@ upgrade_h_ui_systemd() {
   if [[ $(systemctl is-active h-ui) == "active" ]]; then
     systemctl stop h-ui
   fi
-  curl -fsSL https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch} -o /usr/local/h-ui/h-ui &&
+  curl -fsSL https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch} -o /usr/local/h-ui/h-ui &&
     chmod +x /usr/local/h-ui/h-ui &&
     systemctl restart h-ui
   echo_content skyBlue "---> H UI upgrade successful"
@@ -490,8 +494,8 @@ main() {
   echo_content red "=============================================================="
   echo_content skyBlue "$(get_translation ".menu.recommend_os"): CentOS 8+/Ubuntu 20+/Debian 11+"
   echo_content skyBlue "$(get_translation ".menu.description")"
-  echo_content skyBlue "$(get_translation ".menu.author"): jonssonyan <https://jonssonyan.com>"
-  echo_content skyBlue "Github: https://github.com/jonssonyan/h-ui"
+  echo_content skyBlue "$(get_translation ".menu.author"): ${GITHUB_USER} <https://github.com/${GITHUB_USER}>"
+  echo_content skyBlue "Github: https://github.com/${GITHUB_USER}/${GITHUB_REPO}"
   echo_content red "=============================================================="
   echo_content yellow "1. $(get_translation ".menu.install_hui_systemd")"
   echo_content yellow "2. $(get_translation ".menu.upgrade_h_ui_systemd")"

@@ -10,6 +10,7 @@ export interface AccountUpdateDto extends IdDto {
   quota: number;
   expireTime: number;
   deviceNo: number;
+  nodeAccess: number;
   deleted: number;
 }
 
@@ -20,6 +21,7 @@ export interface AccountSaveDto {
   quota: number;
   expireTime: number;
   deviceNo: number;
+  nodeAccess: number;
   deleted: number;
 }
 
@@ -37,6 +39,7 @@ export interface AccountVo extends IdDto {
   kickUtilTime: number;
   deviceNo: number;
   role: string;
+  nodeAccess: number;
   deleted: number;
   createTime: string;
 
@@ -65,6 +68,7 @@ export interface AccountForm extends IdDto {
   quota: number;
   expireTime: number;
   deviceNo: number;
+  nodeAccess: number;
   deleted: number;
 }
 

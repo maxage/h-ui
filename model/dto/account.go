@@ -18,6 +18,7 @@ type AccountSaveDto struct {
 	Quota      *int64  `json:"quota" form:"quota" validate:"required,min=-1"`
 	ExpireTime *int64  `json:"expireTime" form:"expireTime" validate:"required,min=0"`
 	DeviceNo   *int64  `json:"deviceNo" form:"deviceNo" validate:"required,min=1"`
+	NodeAccess *int64  `json:"nodeAccess" form:"nodeAccess" validate:"omitempty,oneof=1 2"`
 	Deleted    *int64  `json:"deleted" form:"deleted" validate:"required,oneof=0 1"`
 }
 
@@ -29,5 +30,6 @@ type AccountUpdateDto struct {
 	Quota      *int64  `json:"quota" form:"quota" validate:"omitempty,min=-1"`
 	ExpireTime *int64  `json:"expireTime" form:"expireTime" validate:"omitempty,min=0"`
 	DeviceNo   *int64  `json:"deviceNo" form:"deviceNo" validate:"omitempty,min=1"`
+	NodeAccess *int64  `json:"nodeAccess" form:"nodeAccess" validate:"omitempty,oneof=1 2"`
 	Deleted    *int64  `json:"deleted" form:"deleted" validate:"omitempty,oneof=0 1"`
 }

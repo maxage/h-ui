@@ -27,6 +27,7 @@ Just the panel for Hysteria2
 - Limit user traffic, user online status, force users to log off, number of online users, reset user traffic
 - Limit the number of users' online devices at the same time, the number of online devices
 - User subscription link, node URL, import and export users
+- Dual node support: Configure second node with SOCKS5 outbound through main node, individual user node access control
 - Managing Hysteria2 configurations and Hysteria2 versions, port hopping
 - Change the Web port, modify the Hysteria2 traffic multiplier
 - Telegram notification
@@ -47,16 +48,22 @@ Memory: ≥ 256MB
 
 ### Quick Install (Recommended)
 
-Install Latest Version
+**Dual Node Support Version (Recommended):**
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh)
+```
+
+Install [Custom Version](https://github.com/maxage/h-ui/releases)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh) v0.0.1
+```
+
+**Original Version:**
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh)
-```
-
-Install [Custom Version](https://github.com/jonssonyan/h-ui/releases)
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) v0.0.1
 ```
 
 ### systemd
@@ -153,6 +160,37 @@ rm -rf /h-ui
 
 Export the user, system configuration, and Hysteria2 configuration in the management background, redeploy the latest
 version of h-ui, and import the data into the management background after the deployment is complete.
+
+## Dual Node Configuration
+
+### Feature Description
+
+The dual node feature allows you to configure a second node that uses the main Hysteria2 node as a SOCKS5 outbound, providing users with more connection options.
+
+### Configuration Steps
+
+1. **Enable Second Node**
+   - Find the "Second Node Configuration" section in the Hysteria management page
+   - Turn on the "Enable Second Node" switch
+   - Set node remark name (optional)
+
+2. **Configure SOCKS5 Outbound**
+   - Fill in the SOCKS5 proxy address (format: host:port)
+   - If needed, fill in SOCKS5 username and password
+   - Click "Save SOCKS5 Configuration"
+
+3. **User Permission Settings**
+   - Edit users in account management
+   - In "Node Access" select:
+     - Single Node: User can only use the main node
+     - Dual Node: User can use both main node and second node
+
+### Notes
+
+- Second node port is automatically set to main node port + 1
+- Second node connects outbound through the main node's SOCKS5 proxy
+- Users can only select dual node access after enabling the second node
+- Second node failures do not affect main node operation
 
 ## FAQ
 

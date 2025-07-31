@@ -11,6 +11,7 @@ type Account struct {
 	KickUtilTime *int64  `gorm:"column:kick_util_time;default:0" json:"kickUtilTime"`
 	DeviceNo     *int64  `gorm:"column:device_no;default:3" json:"deviceNo"`
 	Role         *string `gorm:"column:role;default:'user'" json:"role"`
+	NodeAccess   *int64  `gorm:"column:node_access;default:1" json:"nodeAccess"`
 	Deleted      *int64  `gorm:"column:deleted;default:0" json:"deleted"`
 	BaseEntity   `gorm:"embedded"`
 
