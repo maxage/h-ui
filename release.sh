@@ -13,30 +13,18 @@ if [[ -n $(git status --porcelain) ]]; then
     exit 1
 fi
 
-# 构建二进制文件
-echo "📦 构建二进制文件..."
-chmod +x build.sh
-./build.sh
-
-# 检查构建结果
-if [[ ! -d "build" ]] || [[ -z "$(ls -A build)" ]]; then
-    echo "❌ 构建失败，build 目录为空"
-    exit 1
-fi
-
-echo "✅ 构建完成，生成的文件："
-ls -la build/
-
-# 创建并推送标签
+# 创建并推送标签（GitHub Actions 会自动构建）
 echo "🏷️  创建标签 ${VERSION}..."
 git tag ${VERSION}
 git push origin ${VERSION}
 
-echo "⏳ 等待 GitHub Actions 自动构建和发布..."
-echo "📍 你可以在这里查看进度：https://github.com/maxage/h-ui/actions"
-echo "📍 发布完成后可以在这里查看：https://github.com/maxage/h-ui/releases"
+echo "⏳ GitHub Actions 正在自动构建和发布..."
+echo "📍 查看构建进度：https://github.com/maxage/h-ui/actions"
+echo "📍 发布完成后查看：https://github.com/maxage/h-ui/releases"
 
 echo ""
 echo "🎉 发布流程已启动！"
 echo "📋 安装命令："
 echo "   bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh)"
+echo ""
+echo "⏰ 预计 5-10 分钟后完成构建和发布"

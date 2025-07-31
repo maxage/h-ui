@@ -392,17 +392,10 @@ install_h_ui_systemd() {
 
   export GIN_MODE=release
 
-  # 临时使用原版二进制文件，直到发布自己的 Release
-  if [[ "${GITHUB_USER}" == "maxage" ]]; then
-    bin_url=https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch}
-    if [[ "latest" != "${hui_systemd_version}" ]]; then
-      bin_url=https://github.com/jonssonyan/h-ui/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
-    fi
-  else
-    bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
-    if [[ "latest" != "${hui_systemd_version}" ]]; then
-      bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
-    fi
+  # 使用双节点支持版本的二进制文件
+  bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
+  if [[ "latest" != "${hui_systemd_version}" ]]; then
+    bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/${hui_systemd_version}/h-ui-linux-${get_arch}
   fi
 
   echo_content green "---> Downloading H UI binary from: ${bin_url}"
@@ -446,13 +439,8 @@ upgrade_h_ui_systemd() {
   if [[ $(systemctl is-active h-ui) == "active" ]]; then
     systemctl stop h-ui
   fi
-  # 临时使用原版二进制文件进行升级
-  if [[ "${GITHUB_USER}" == "maxage" ]]; then
-    upgrade_bin_url=https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-${get_arch}
-  else
-    upgrade_bin_url=https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch}
-  fi
-  curl -fsSL ${upgrade_bin_url} -o /usr/local/h-ui/h-ui &&
+  # 使用双节点支持版本进行升级
+  curl -fsSL https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/h-ui-linux-${get_arch} -o /usr/local/h-ui/h-ui &&
     chmod +x /usr/local/h-ui/h-ui &&
     systemctl restart h-ui
   echo_content skyBlue "---> H UI upgrade successful"

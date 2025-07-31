@@ -1,0 +1,211 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build:prod
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+
+  build-backend:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: linux
+            arch: 386
+          - os: linux
+            arch: arm
+            arm: 6
+          - os: linux
+            arch: arm
+            arm: 7
+          - os: windows
+            arch: amd64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+      - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+        run: |
+          output_name="h-ui-${{ matrix.os }}-${{ matrix.arch }}"
+          if [ "${{ matrix.arch }}" == "arm" ]; then
+            output_name="${output_name}v${{ matrix.arm }}"
+          fi
+          if [ "${{ matrix.os }}" == "windows" ]; then
+            output_name="${output_name}.exe"
+          fi
+          
+          mkdir -p build
+          go build -o "build/${output_name}" -trimpath -ldflags "-s -w"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.arm && format('v{0}', matrix.arm) || '' }}
+          path: build/
+          retention-days: 1
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: build/
+          merge-multiple: true
+
+      - name: List build files
+        run: ls -la build/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*
+          generate_release_notes: true
+          body: |
+            ## H UI 双节点支持版本 ${{ github.ref_name }}
+            
+            ### 🎉 新功能
+            - ✅ **双节点支持**：配置第二节点通过主节点 SOCKS5 出站
+            - ✅ **用户权限控制**：为每个用户单独设置单节点或双节点权限  
+            - ✅ **智能订阅生成**：根据用户权限动态生成订阅内容
+            - ✅ **配置管理**：完整的第二节点配置导入导出功能
+            - ✅ **错误隔离**：第二节点问题不影响主节点运行
+            - ✅ **向下兼容**：完全兼容原版 H UI 的所有功能
+            
+            ### 📦 安装方法
+            
+            **一键安装（推荐）：**
+            ```bash
+            bash <(curl -fsSL https://raw.githubusercontent.com/maxage/h-ui/main/install.sh)
+            ```
+            
+            **手动安装：**
+            1. 下载对应平台的二进制文件
+            2. 参考 [安装文档](https://github.com/maxage/h-ui/blob/main/DUAL_NODE_INSTALL.md)
+            
+            ### 🔧 配置说明
+            
+            安装完成后：
+            1. 访问管理面板：`http://your-server-ip:8081`
+            2. 进入 **Hysteria 配置** 页面
+            3. 在页面底部找到 **第二节点配置** 区域
+            4. 启用第二节点并配置 SOCKS5 出站
+            5. 在 **用户管理** 中为用户设置节点权限
+            
+            详细说明请查看：[双节点安装指南](https://github.com/maxage/h-ui/blob/main/DUAL_NODE_INSTALL.md)
+            
+            ### 📋 支持平台
+            - Linux (amd64, arm64, 386, armv6, armv7)
+            - Windows (amd64)  
+            - macOS (amd64, arm64)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-docker:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binary-linux-*
+          path: build/
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            maxage/h-ui:latest
+            maxage/h-ui:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
